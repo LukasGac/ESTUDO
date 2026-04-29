@@ -14,22 +14,19 @@ export function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!username.trim() || !password) return
 
     setLoading(true)
     setError('')
 
-    // Pequeno delay para dar feedback visual antes do reload
-    setTimeout(() => {
-      const result = login(username.trim(), password)
-      if (!result.ok) {
-        setError(result.error ?? 'Erro ao entrar')
-        setLoading(false)
-      }
-      // Se ok, o login faz window.location.replace — não precisa de mais nada
-    }, 120)
+    const result = await login(username.trim(), password)
+    if (!result.ok) {
+      setError(result.error ?? 'Erro ao entrar')
+      setLoading(false)
+    }
+    // Se ok, onAuthStateChange dispara e o router redireciona automaticamente
   }
 
   return (

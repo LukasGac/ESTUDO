@@ -9,7 +9,12 @@ import { Focus } from '@/pages/Focus'
 import { Login } from '@/pages/Login'
 import { Admin } from '@/pages/Admin'
 import { useDeckStore } from '@/store/deckStore'
+import { useStudyStore } from '@/store/studyStore'
+import { usePomodoroStore } from '@/store/pomodoroStore'
+import { useScheduleStore } from '@/store/scheduleStore'
+import { useFocusStore } from '@/store/focusStore'
 import { useAuthStore } from '@/store/authStore'
+import { runMigration } from '@/lib/migration'
 
 function AuthGuard() {
   const session = useAuthStore((s) => s.session)
@@ -52,11 +57,48 @@ const router = createBrowserRouter([
 ])
 
 export function App() {
-  const hydrate = useDeckStore((s) => s.hydrate)
+  const isLoading = useAuthStore((s) => s.isLoading)
+  const sessionUserId = useAuthStore((s) => s.session?.userId)
+
+  const hydrateDecks = useDeckStore((s) => s.hydrate)
+  const resetDecks = useDeckStore((s) => s.reset)
+  const hydrateStudy = useStudyStore((s) => s.hydrate)
+  const resetStudy = useStudyStore((s) => s.reset)
+  const hydratePomodoro = usePomodoroStore((s) => s.hydrate)
+  const resetPomodoro = usePomodoroStore((s) => s.resetStore)
+  const hydrateSchedule = useScheduleStore((s) => s.hydrate)
+  const resetSchedule = useScheduleStore((s) => s.reset)
+  const hydrateFocus = useFocusStore((s) => s.hydrate)
+  const resetFocus = useFocusStore((s) => s.reset)
 
   useEffect(() => {
-    hydrate()
-  }, [hydrate])
+    if (!sessionUserId) {
+      resetDecks()
+      resetStudy()
+      resetPomodoro()
+      resetSchedule()
+      resetFocus()
+      return
+    }
+
+    // Migração one-time de dados do localStorage para Supabase
+    runMigration(sessionUserId).catch(console.error)
+
+    // Hidrata todos os stores com dados do usuário logado
+    hydrateDecks()
+    hydrateStudy()
+    hydratePomodoro()
+    hydrateSchedule()
+    hydrateFocus()
+  }, [sessionUserId])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
+      </div>
+    )
+  }
 
   return <RouterProvider router={router} />
 }

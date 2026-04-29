@@ -2,14 +2,15 @@ import { create } from 'zustand'
 import { Card, CreateCardInput, CreateDeckInput, Deck, DeckWithStats, Rating } from '@/types'
 import {
   deleteCardFromStorage,
+  getActiveUserId,
   getCards,
   getDecks,
-  isInitialized,
   markInitialized,
   saveAllCards,
   saveCard,
   saveDecks,
 } from '@/lib/storage'
+import { fetchCards, fetchDecks } from '@/lib/db'
 import { buildStudyQueue, calculateNextReview, computeDeckStats } from '@/lib/srs'
 import { generateId } from '@/lib/utils'
 import { SRS } from '@/constants/srs'
@@ -19,6 +20,7 @@ interface DeckStore {
   cards: Record<string, Card>
 
   hydrate: () => void
+  reset: () => void
 
   addDeck: (input: CreateDeckInput) => Deck
   updateDeck: (id: string, updates: Partial<Pick<Deck, 'name' | 'description' | 'color' | 'icon'>>) => void
@@ -40,12 +42,31 @@ export const useDeckStore = create<DeckStore>((set, get) => ({
   cards: {},
 
   hydrate() {
-    if (!isInitialized()) {
+    // Carrega do localStorage imediatamente (UX instantânea)
+    const localDecks = getDecks()
+    const localCards = getCards()
+    if (Object.keys(localDecks).length === 0 && Object.keys(localCards).length === 0) {
       markInitialized()
-      set({ decks: {}, cards: {} })
-      return
     }
-    set({ decks: getDecks(), cards: getCards() })
+    set({ decks: localDecks, cards: localCards })
+
+    // Reconcilia com Supabase em background
+    const userId = getActiveUserId()
+    if (userId === 'default') return
+    Promise.all([fetchDecks(userId), fetchCards(userId)])
+      .then(([remoteDecks, remoteCards]) => {
+        // Supabase é a fonte de verdade — sobrescreve localStorage
+        if (Object.keys(remoteDecks).length > 0 || Object.keys(remoteCards).length > 0) {
+          localStorage.setItem(`anki_decks_${userId}`, JSON.stringify(remoteDecks))
+          localStorage.setItem(`anki_cards_${userId}`, JSON.stringify(remoteCards))
+          set({ decks: remoteDecks, cards: remoteCards })
+        }
+      })
+      .catch(console.error)
+  },
+
+  reset() {
+    set({ decks: {}, cards: {} })
   },
 
   addDeck(input) {

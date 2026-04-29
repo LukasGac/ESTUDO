@@ -1,0 +1,16 @@
+-- Seed: usuário admin inicial
+-- Execute via: supabase db seed
+-- OU insira manualmente no SQL Editor do Supabase Dashboard.
+--
+-- Este script cria o usuário admin@estudo.internal com senha TROQUE-ESTA-SENHA.
+-- Após o primeiro login, recomenda-se trocar a senha via página Admin.
+
+-- 1. Cria o usuário na camada de autenticação do Supabase
+-- (substitua pelo UUID gerado automaticamente na criação real)
+--
+-- Na prática, use a Edge Function admin-ops para criar o admin:
+-- POST /functions/v1/admin-ops
+-- Body: { "action": "create", "username": "admin", "displayName": "Administrador",
+--         "password": "TROQUE-ESTA-SENHA", "role": "admin" }
+--
+-- Ou crie diretamente no Supabase Dashboard > Authentication > Users.

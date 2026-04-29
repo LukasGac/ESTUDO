@@ -1,163 +1,151 @@
 import { create } from 'zustand'
-import { AuthSession, Card, CreateUserInput, Deck, User, UserRole } from '@/types'
-import {
-  clearLegacyKeys,
-  getAuthSession,
-  getUsers,
-  saveAuthSession,
-  saveUsers,
-  setActiveUser,
-} from '@/lib/storage'
-import { generateId } from '@/lib/utils'
-import { SEED_DECK, SEED_CARDS } from '@/data/seed'
-import { PETROBRAS_DECKS, PETROBRAS_CARDS } from '@/data/petrobras'
-
-// ── Hash de senha ─────────────────────────────────────────────────────────────
-// djb2 modificado — não é produção, mas é aceitável para localStorage local.
-
-function hashPassword(plain: string): string {
-  let h = 5381
-  for (let i = 0; i < plain.length; i++) {
-    h = (Math.imul(h, 33) ^ plain.charCodeAt(i)) | 0
-  }
-  return (h >>> 0).toString(16).padStart(8, '0')
-}
-
-// ── Inicialização do usuário admin ────────────────────────────────────────────
-
-function seedAdminData(): void {
-  const decks: Record<string, Deck> = { [SEED_DECK.id]: SEED_DECK }
-  PETROBRAS_DECKS.forEach((d) => { decks[d.id] = d })
-
-  const cards: Record<string, Card> = {}
-  ;[...SEED_CARDS, ...PETROBRAS_CARDS].forEach((c) => { cards[c.id] = c })
-
-  localStorage.setItem('anki_decks_admin', JSON.stringify(decks))
-  localStorage.setItem('anki_cards_admin', JSON.stringify(cards))
-  localStorage.setItem('anki_meta_admin', JSON.stringify({
-    version: '1.0.0', dataVersion: '3.0.0', initializedAt: new Date().toISOString(),
-  }))
-}
-
-function ensureAdminExists(): void {
-  const users = getUsers()
-  if (Object.keys(users).length > 0) return
-
-  const admin: User = {
-    id: 'admin',
-    username: 'admin',
-    passwordHash: hashPassword('TROQUE-ESTA-SENHA'),
-    displayName: 'Administrador',
-    role: 'admin',
-    createdAt: new Date().toISOString(),
-  }
-  saveUsers({ admin })
-  seedAdminData()
-  // Remove dados do período anterior (sem prefixo de usuário)
-  clearLegacyKeys()
-}
-
-ensureAdminExists()
-
-// ── Store ─────────────────────────────────────────────────────────────────────
+import { AuthSession, CreateUserInput, User, UserRole } from '@/types'
+import { setActiveUser } from '@/lib/storage'
+import { supabase } from '@/lib/supabase'
+import { fetchUsers, updateUserProfile, clearUserDataRemote } from '@/lib/db'
 
 interface AuthStore {
   session: AuthSession | null
+  isLoading: boolean
+  users: User[]
 
-  login: (username: string, password: string) => { ok: boolean; error?: string }
-  logout: () => void
+  login: (username: string, password: string) => Promise<{ ok: boolean; error?: string }>
+  logout: () => Promise<void>
+  refreshUsers: () => Promise<void>
 
-  // Gestão de usuários (apenas admin)
-  getUsers: () => User[]
-  addUser: (input: CreateUserInput) => { ok: boolean; error?: string }
-  updateUser: (id: string, updates: { displayName?: string; email?: string; password?: string; role?: UserRole }) => void
-  deleteUser: (id: string) => void
-  clearUserData: (userId: string) => void
+  addUser: (input: CreateUserInput) => Promise<{ ok: boolean; error?: string }>
+  updateUser: (id: string, updates: { displayName?: string; email?: string; password?: string; role?: UserRole }) => Promise<void>
+  deleteUser: (id: string) => Promise<void>
+  clearUserData: (userId: string) => Promise<void>
 }
 
-export const useAuthStore = create<AuthStore>(() => ({
-  session: getAuthSession(),
+// ── Listener de autenticação ──────────────────────────────────────────────────
 
-  login(username, password) {
-    const users = getUsers()
-    const user = Object.values(users).find(
-      (u) => u.username.toLowerCase() === username.toLowerCase()
-    )
-    if (!user) return { ok: false, error: 'Usuário não encontrado' }
-    if (user.passwordHash !== hashPassword(password)) {
+async function resolveSession(userId: string): Promise<AuthSession | null> {
+  const { data, error } = await supabase
+    .from('users')
+    .select('username, role')
+    .eq('id', userId)
+    .single()
+  if (error || !data) return null
+  return {
+    userId,
+    username: data.username as string,
+    role: data.role as UserRole,
+  }
+}
+
+supabase.auth.onAuthStateChange(async (event, sbSession) => {
+  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+    if (sbSession?.user) {
+      const session = await resolveSession(sbSession.user.id)
+      if (session) {
+        setActiveUser(session.userId)
+        useAuthStore.setState({ session, isLoading: false })
+      } else {
+        // Perfil não encontrado — limpa sessão
+        await supabase.auth.signOut()
+        useAuthStore.setState({ session: null, isLoading: false })
+      }
+    } else {
+      useAuthStore.setState({ session: null, isLoading: false })
+    }
+  } else if (event === 'SIGNED_OUT') {
+    setActiveUser('default')
+    useAuthStore.setState({ session: null, isLoading: false, users: [] })
+  } else if (event === 'TOKEN_REFRESHED') {
+    // Sessão renovada — sem ação necessária
+  }
+})
+
+// ── Store ─────────────────────────────────────────────────────────────────────
+
+export const useAuthStore = create<AuthStore>(() => ({
+  session: null,
+  isLoading: true,
+  users: [],
+
+  async login(username, password) {
+    // 1. Resolve o email sintético pelo username via RPC pública
+    const { data: email, error: rpcError } = await supabase.rpc('get_auth_email_by_username', {
+      p_username: username.trim(),
+    })
+    if (rpcError || !email) {
+      return { ok: false, error: 'Usuário não encontrado' }
+    }
+
+    // 2. Autentica com Supabase Auth
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    if (authError) {
       return { ok: false, error: 'Senha incorreta' }
     }
 
-    const session: AuthSession = {
-      userId: user.id,
-      username: user.username,
-      role: user.role,
-    }
-    saveAuthSession(session)
-    setActiveUser(user.id)
-
-    // Reload completo para que todos os stores reinicializem com dados do usuário
-    window.location.replace('/')
+    // onAuthStateChange dispara SIGNED_IN e atualiza o store
     return { ok: true }
   },
 
-  logout() {
-    saveAuthSession(null)
-    window.location.replace('/login')
+  async logout() {
+    await supabase.auth.signOut()
+    // onAuthStateChange dispara SIGNED_OUT e limpa o store
   },
 
-  getUsers() {
-    return Object.values(getUsers())
+  async refreshUsers() {
+    const users = await fetchUsers()
+    useAuthStore.setState({ users })
   },
 
-  addUser(input) {
-    const users = getUsers()
-    const exists = Object.values(users).some(
-      (u) => u.username.toLowerCase() === input.username.toLowerCase()
-    )
-    if (exists) return { ok: false, error: 'Nome de usuário já existe' }
-
-    const id = generateId()
-    const user: User = {
-      id,
-      username: input.username.trim(),
-      passwordHash: hashPassword(input.password),
-      displayName: input.displayName.trim(),
-      email: input.email?.trim() || undefined,
-      role: input.role,
-      createdAt: new Date().toISOString(),
+  async addUser(input) {
+    const { data, error } = await supabase.functions.invoke('admin-ops', {
+      body: {
+        action: 'create',
+        username: input.username,
+        displayName: input.displayName,
+        email: input.email,
+        password: input.password,
+        role: input.role,
+      },
+    })
+    if (error || data?.error) {
+      return { ok: false, error: data?.error ?? 'Erro ao criar usuário' }
     }
-    saveUsers({ ...users, [id]: user })
+    await useAuthStore.getState().refreshUsers()
     return { ok: true }
   },
 
-  updateUser(id, updates) {
-    const users = getUsers()
-    if (!users[id]) return
-    const updated: User = {
-      ...users[id],
-      displayName: updates.displayName ?? users[id].displayName,
-      email: updates.email !== undefined ? updates.email || undefined : users[id].email,
-      role: updates.role ?? users[id].role,
-      ...(updates.password ? { passwordHash: hashPassword(updates.password) } : {}),
+  async updateUser(id, updates) {
+    if (updates.password) {
+      await supabase.functions.invoke('admin-ops', {
+        body: { action: 'updatePassword', userId: id, password: updates.password },
+      })
     }
-    saveUsers({ ...users, [id]: updated })
+
+    const profileUpdates: Record<string, unknown> = {}
+    if (updates.displayName !== undefined) profileUpdates.display_name = updates.displayName
+    if (updates.email !== undefined) profileUpdates.email = updates.email || null
+    if (updates.role !== undefined) profileUpdates.role = updates.role
+
+    if (Object.keys(profileUpdates).length > 0) {
+      await updateUserProfile(id, profileUpdates as Parameters<typeof updateUserProfile>[1])
+    }
+
+    await useAuthStore.getState().refreshUsers()
   },
 
-  deleteUser(id) {
-    const users = getUsers()
-    const session = getAuthSession()
-    if (id === session?.userId) return // não pode deletar a si mesmo
-    delete users[id]
-    saveUsers(users)
+  async deleteUser(id) {
+    await supabase.functions.invoke('admin-ops', {
+      body: { action: 'delete', userId: id },
+    })
+    await useAuthStore.getState().refreshUsers()
   },
 
-  clearUserData(userId) {
-    const userDataKeys = [
+  async clearUserData(userId) {
+    await clearUserDataRemote(userId)
+    // Limpa também o localStorage desse usuário
+    const keys = [
       'anki_decks', 'anki_cards', 'anki_session', 'anki_meta',
       'anki_study_goals', 'anki_daily_stats', 'anki_pomodoro',
-      'anki_schedule_entries', 'anki_schedule_completions', 'anki_garden',
+      'anki_schedule_entries', 'anki_schedule_completions', 'anki_garden', 'anki_dinos',
     ]
-    userDataKeys.forEach((k) => localStorage.removeItem(`${k}_${userId}`))
+    keys.forEach((k) => localStorage.removeItem(`${k}_${userId}`))
   },
 }))

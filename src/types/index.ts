@@ -95,7 +95,6 @@ export type UserRole = 'admin' | 'user'
 export interface User {
   id: string
   username: string
-  passwordHash: string
   displayName: string
   email?: string
   role: UserRole
