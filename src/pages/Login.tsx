@@ -24,9 +24,8 @@ export function Login() {
     const result = await login(username.trim(), password)
     if (!result.ok) {
       setError(result.error ?? 'Erro ao entrar')
-      setLoading(false)
     }
-    // Se ok, onAuthStateChange dispara e o router redireciona automaticamente
+    setLoading(false)
   }
 
   return (

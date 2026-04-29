@@ -36,25 +36,27 @@ async function resolveSession(userId: string): Promise<AuthSession | null> {
 }
 
 supabase.auth.onAuthStateChange(async (event, sbSession) => {
-  if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-    if (sbSession?.user) {
-      const session = await resolveSession(sbSession.user.id)
-      if (session) {
-        setActiveUser(session.userId)
-        useAuthStore.setState({ session, isLoading: false })
+  try {
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+      if (sbSession?.user) {
+        const session = await resolveSession(sbSession.user.id)
+        if (session) {
+          setActiveUser(session.userId)
+          useAuthStore.setState({ session, isLoading: false })
+        } else {
+          await supabase.auth.signOut()
+          useAuthStore.setState({ session: null, isLoading: false })
+        }
       } else {
-        // Perfil não encontrado — limpa sessão
-        await supabase.auth.signOut()
         useAuthStore.setState({ session: null, isLoading: false })
       }
-    } else {
-      useAuthStore.setState({ session: null, isLoading: false })
+    } else if (event === 'SIGNED_OUT') {
+      setActiveUser('default')
+      useAuthStore.setState({ session: null, isLoading: false, users: [] })
     }
-  } else if (event === 'SIGNED_OUT') {
-    setActiveUser('default')
-    useAuthStore.setState({ session: null, isLoading: false, users: [] })
-  } else if (event === 'TOKEN_REFRESHED') {
-    // Sessão renovada — sem ação necessária
+  } catch (err) {
+    console.error('[auth] onAuthStateChange error:', err)
+    useAuthStore.setState({ session: null, isLoading: false })
   }
 })
 
