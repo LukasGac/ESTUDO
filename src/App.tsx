@@ -60,6 +60,13 @@ export function App() {
   const isLoading = useAuthStore((s) => s.isLoading)
   const sessionUserId = useAuthStore((s) => s.session?.userId)
 
+  // Safety net: se após 10s ainda estiver carregando, força isLoading: false
+  useEffect(() => {
+    if (!isLoading) return
+    const id = setTimeout(() => useAuthStore.setState({ isLoading: false }), 10000)
+    return () => clearTimeout(id)
+  }, [isLoading])
+
   const hydrateDecks = useDeckStore((s) => s.hydrate)
   const resetDecks = useDeckStore((s) => s.reset)
   const hydrateStudy = useStudyStore((s) => s.hydrate)

@@ -22,10 +22,13 @@ interface AuthStore {
 // ── Listener de autenticação ──────────────────────────────────────────────────
 
 async function resolveSession(userId: string): Promise<AuthSession | null> {
-  const { data, error } = await supabase.rpc('get_my_profile')
-  if (error || !data || (data as unknown[]).length === 0) return null
-  const row = (data as { username: string; role: string }[])[0]
-  return { userId, username: row.username, role: row.role as UserRole }
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000))
+  const query = supabase.rpc('get_my_profile').then(({ data, error }) => {
+    if (error || !data || (data as unknown[]).length === 0) return null
+    const row = (data as { username: string; role: string }[])[0]
+    return { userId, username: row.username, role: row.role as UserRole } as AuthSession
+  })
+  return Promise.race([query, timeout])
 }
 
 supabase.auth.onAuthStateChange(async (event, sbSession) => {
