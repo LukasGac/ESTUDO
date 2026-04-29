@@ -34,7 +34,14 @@ serve(async (req) => {
     })
   }
 
-  const { data: callerProfile } = await callerClient
+  // Cliente com service role — acesso total, nunca exposto ao browser
+  const adminClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  // Usa service role para checar perfil (bypassa RLS)
+  const { data: callerProfile } = await adminClient
     .from('users')
     .select('role')
     .eq('id', caller.id)
@@ -46,12 +53,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-
-  // Cliente com service role — acesso total, nunca exposto ao browser
-  const adminClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  )
 
   const body = await req.json()
   const { action } = body
