@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { PomodoroMode, PomodoroSettings, PomodoroStateData } from '@/types'
-import { getPomodoroState, savePomodoroState } from '@/lib/storage'
+import { getPomodoroState, getActiveUserId, savePomodoroState } from '@/lib/storage'
+import { fetchPomodoroState } from '@/lib/db'
 import { getTodayKey } from '@/lib/streak'
 import { playNotificationChime } from '@/lib/audio'
 
@@ -35,6 +36,8 @@ interface PomodoroStore {
   isExpanded: boolean
 
   // Actions
+  hydrate: () => void
+  resetStore: () => void
   start: () => void
   pause: () => void
   reset: () => void
@@ -65,6 +68,40 @@ export const usePomodoroStore = create<PomodoroStore>((set, get) => ({
   isRunning: false,
   cyclesSinceLongBreak: 0,
   isExpanded: false,
+
+  hydrate() {
+    const local = loadPersisted()
+    set({ ...local, timeLeft: local.settings.focusDuration * 60 })
+
+    const userId = getActiveUserId()
+    if (userId === 'default') return
+    fetchPomodoroState(userId)
+      .then((remote) => {
+        if (!remote) return
+        const today = getTodayKey()
+        const cycles = remote.lastCycleDate === today ? remote.cyclesCompletedToday : 0
+        localStorage.setItem(`anki_pomodoro_${userId}`, JSON.stringify(remote))
+        set({
+          settings: remote.settings,
+          cyclesCompletedToday: cycles,
+          lastCycleDate: remote.lastCycleDate,
+          timeLeft: remote.settings.focusDuration * 60,
+        })
+      })
+      .catch(console.error)
+  },
+
+  resetStore() {
+    const defaults = loadPersisted()
+    set({
+      ...defaults,
+      mode: 'focus',
+      timeLeft: defaults.settings.focusDuration * 60,
+      isRunning: false,
+      cyclesSinceLongBreak: 0,
+      isExpanded: false,
+    })
+  },
 
   start() {
     set({ isRunning: true })

@@ -1,11 +1,20 @@
 import { create } from 'zustand'
 import { ScheduleCompletion, ScheduleEntry, WeekDay } from '@/types'
 import {
+  getActiveUserId,
   getScheduleCompletions,
   getScheduleEntries,
   saveScheduleCompletions,
   saveScheduleEntries,
 } from '@/lib/storage'
+import {
+  fetchScheduleEntries,
+  fetchScheduleCompletions,
+  upsertScheduleEntry,
+  deleteScheduleEntryRemote,
+  upsertScheduleCompletion,
+  deleteScheduleCompletion,
+} from '@/lib/db'
 import { generateId } from '@/lib/utils'
 import { getTodayKey } from '@/lib/streak'
 
@@ -42,6 +51,9 @@ interface ScheduleStore {
   completions: ScheduleCompletion[]
   weekOffset: number  // 0=atual, -N=passado, +N=futuro
 
+  hydrate: () => void
+  reset: () => void
+
   addEntry: (input: Omit<ScheduleEntry, 'id'>) => void
   updateEntry: (id: string, updates: Partial<Omit<ScheduleEntry, 'id'>>) => void
   deleteEntry: (id: string) => void
@@ -69,11 +81,33 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
   completions: getScheduleCompletions(),
   weekOffset: 0,
 
+  hydrate() {
+    set({ entries: getScheduleEntries(), completions: getScheduleCompletions() })
+
+    const userId = getActiveUserId()
+    if (userId === 'default') return
+    Promise.all([fetchScheduleEntries(userId), fetchScheduleCompletions(userId)])
+      .then(([remoteEntries, remoteCompletions]) => {
+        if (Object.keys(remoteEntries).length > 0 || remoteCompletions.length > 0) {
+          localStorage.setItem(`anki_schedule_entries_${userId}`, JSON.stringify(remoteEntries))
+          localStorage.setItem(`anki_schedule_completions_${userId}`, JSON.stringify(remoteCompletions))
+          set({ entries: remoteEntries, completions: remoteCompletions })
+        }
+      })
+      .catch(console.error)
+  },
+
+  reset() {
+    set({ entries: {}, completions: [], weekOffset: 0 })
+  },
+
   addEntry(input) {
     const entry: ScheduleEntry = { id: generateId(), ...input }
     const entries = { ...get().entries, [entry.id]: entry }
     saveScheduleEntries(entries)
     set({ entries })
+    const userId = getActiveUserId()
+    if (userId !== 'default') upsertScheduleEntry(entry, userId).catch(console.error)
   },
 
   updateEntry(id, updates) {
@@ -82,6 +116,8 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     entries[id] = { ...entries[id], ...updates }
     saveScheduleEntries(entries)
     set({ entries })
+    const userId = getActiveUserId()
+    if (userId !== 'default') upsertScheduleEntry(entries[id], userId).catch(console.error)
   },
 
   deleteEntry(id) {
@@ -91,20 +127,27 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     saveScheduleEntries(entries)
     saveScheduleCompletions(completions)
     set({ entries, completions })
+    const userId = getActiveUserId()
+    if (userId !== 'default') deleteScheduleEntryRemote(id).catch(console.error)
   },
 
   toggleCompletion(entryId) {
-    // Toggle sempre usa a data de hoje (semana atual, dia de hoje)
     const date = getTodayKey()
     const completions = [...get().completions]
     const idx = completions.findIndex((c) => c.entryId === entryId && c.date === date)
     if (idx >= 0) {
       completions.splice(idx, 1)
+      saveScheduleCompletions(completions)
+      set({ completions })
+      const userId = getActiveUserId()
+      if (userId !== 'default') deleteScheduleCompletion(entryId, date).catch(console.error)
     } else {
       completions.push({ entryId, date })
+      saveScheduleCompletions(completions)
+      set({ completions })
+      const userId = getActiveUserId()
+      if (userId !== 'default') upsertScheduleCompletion({ entryId, date }, userId).catch(console.error)
     }
-    saveScheduleCompletions(completions)
-    set({ completions })
   },
 
   prevWeek() {

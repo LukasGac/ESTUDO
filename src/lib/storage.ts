@@ -11,28 +11,20 @@ import {
   StudySession,
   User,
 } from '@/types'
+import * as db from './db'
 
 // ── Namespace por usuário ─────────────────────────────────────────────────────
 
 let _userId = 'default'
 
-// Lê a sessão do localStorage ao iniciar o módulo para que todos os stores
-// já usem o prefixo correto na primeira renderização.
-;(() => {
-  try {
-    const raw = localStorage.getItem('anki_auth_session')
-    if (raw) {
-      const s = JSON.parse(raw) as Partial<AuthSession>
-      if (s?.userId) _userId = s.userId
-    }
-  } catch { /* ok */ }
-})()
-
 export function setActiveUser(userId: string): void {
   _userId = userId
 }
 
-/** Gera chave com prefixo do usuário atual */
+export function getActiveUserId(): string {
+  return _userId
+}
+
 function u(base: string): string {
   return `${base}_${_userId}`
 }
@@ -55,6 +47,9 @@ export function getDecks(): Record<string, Deck> {
 }
 export function saveDecks(decks: Record<string, Deck>): void {
   localStorage.setItem(u('anki_decks'), JSON.stringify(decks))
+  if (_userId !== 'default') {
+    db.upsertAllDecks(decks, _userId).catch(console.error)
+  }
 }
 
 // ── Cards ─────────────────────────────────────────────────────────────────────
@@ -66,14 +61,23 @@ export function saveCard(card: Card): void {
   const all = getCards()
   all[card.id] = card
   localStorage.setItem(u('anki_cards'), JSON.stringify(all))
+  if (_userId !== 'default') {
+    db.upsertCard(card, _userId).catch(console.error)
+  }
 }
 export function deleteCardFromStorage(cardId: string): void {
   const all = getCards()
   delete all[cardId]
   localStorage.setItem(u('anki_cards'), JSON.stringify(all))
+  if (_userId !== 'default') {
+    db.deleteCardRemote(cardId).catch(console.error)
+  }
 }
 export function saveAllCards(cards: Record<string, Card>): void {
   localStorage.setItem(u('anki_cards'), JSON.stringify(cards))
+  if (_userId !== 'default') {
+    db.upsertAllCards(cards, _userId).catch(console.error)
+  }
 }
 
 // ── Session ───────────────────────────────────────────────────────────────────
@@ -127,6 +131,9 @@ export function getStudyGoal(): StudyGoal {
 }
 export function saveStudyGoal(goal: StudyGoal): void {
   localStorage.setItem(u('anki_study_goals'), JSON.stringify(goal))
+  if (_userId !== 'default') {
+    db.upsertStudyGoal(goal, _userId).catch(console.error)
+  }
 }
 
 // ── Daily Stats ───────────────────────────────────────────────────────────────
@@ -136,6 +143,9 @@ export function getDailyStats(): Record<string, DailyStats> {
 }
 export function saveDailyStats(stats: Record<string, DailyStats>): void {
   localStorage.setItem(u('anki_daily_stats'), JSON.stringify(stats))
+  if (_userId !== 'default') {
+    db.upsertDailyStats(stats, _userId).catch(console.error)
+  }
 }
 
 // ── Pomodoro ──────────────────────────────────────────────────────────────────
@@ -150,6 +160,9 @@ export function getPomodoroState(): PomodoroStateData {
 }
 export function savePomodoroState(state: PomodoroStateData): void {
   localStorage.setItem(u('anki_pomodoro'), JSON.stringify(state))
+  if (_userId !== 'default') {
+    db.upsertPomodoroState(state, _userId).catch(console.error)
+  }
 }
 
 // ── Schedule ──────────────────────────────────────────────────────────────────
@@ -170,7 +183,6 @@ export function saveScheduleCompletions(completions: ScheduleCompletion[]): void
 // ── Dinos ─────────────────────────────────────────────────────────────────────
 
 export function getDinos(): DinoEntry[] {
-  // Migração: se existir dado legado de garden, ignora (tipos incompatíveis)
   return parse(u('anki_dinos'), [])
 }
 export function saveDinos(dinos: DinoEntry[]): void {
@@ -203,8 +215,6 @@ export function clearLegacyKeys(): void {
   ]
   legacy.forEach((k) => localStorage.removeItem(k))
 }
-
-// ── Limpar todos os dados do usuário atual ────────────────────────────────────
 
 export function clearCurrentUserData(): void {
   const userKeys = [

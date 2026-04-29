@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { AmbientSound, DinoEntry, DinoType, DINO_HABITAT, getDinoSize } from '@/types'
-import { getDinos, saveDinos } from '@/lib/storage'
+import { getDinos, getActiveUserId, saveDinos } from '@/lib/storage'
+import { fetchDinos, insertDino } from '@/lib/db'
 import { generateId } from '@/lib/utils'
 import { startAmbientSound, stopAmbientSound, setAmbientVolume } from '@/lib/audio'
 
@@ -21,6 +22,8 @@ interface FocusStore {
   ambientVolume: number
 
   // Actions
+  hydrate: () => void
+  reset: () => void
   startSession: (durationMinutes: number, dinoType: DinoType) => void
   killSession: () => void
   completeSession: () => void
@@ -47,6 +50,25 @@ export const useFocusStore = create<FocusStore>((set, get) => ({
   defaultDinoType: 't-rex',
   ambientSound: 'none',
   ambientVolume: 0.3,
+
+  hydrate() {
+    set({ dinos: getDinos() })
+
+    const userId = getActiveUserId()
+    if (userId === 'default') return
+    fetchDinos(userId)
+      .then((remoteDinos) => {
+        if (remoteDinos.length > 0) {
+          localStorage.setItem(`anki_dinos_${userId}`, JSON.stringify(remoteDinos))
+          set({ dinos: remoteDinos })
+        }
+      })
+      .catch(console.error)
+  },
+
+  reset() {
+    set({ dinos: [], isActive: false, isKilled: false })
+  },
 
   startSession(durationMinutes, dinoType) {
     const { ambientSound, ambientVolume } = get()
@@ -84,6 +106,8 @@ export const useFocusStore = create<FocusStore>((set, get) => ({
     const newDinos = [...dinos, dino]
     saveDinos(newDinos)
     set({ isActive: false, isKilled: false, dinos: newDinos })
+    const userId = getActiveUserId()
+    if (userId !== 'default') insertDino(dino, userId).catch(console.error)
   },
 
   setDefaultDuration(m) {

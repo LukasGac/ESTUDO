@@ -2,11 +2,13 @@ import { create } from 'zustand'
 import { DailyStats, GoalType, Rating, StudyGoal, StudySession } from '@/types'
 import {
   getDailyStats,
+  getActiveUserId,
   getStudyGoal,
   saveSession,
   saveDailyStats,
   saveStudyGoal,
 } from '@/lib/storage'
+import { fetchDailyStats, fetchStudyGoal } from '@/lib/db'
 import { getTodayKey, updateStreak } from '@/lib/streak'
 import { useDeckStore } from '@/store/deckStore'
 
@@ -21,6 +23,9 @@ interface StudyStore {
   isFlipped: boolean
   studyGoal: StudyGoal
   todayStats: DailyStats
+
+  hydrate: () => void
+  reset: () => void
 
   startSession: (deckId: string, cardIds: string[]) => void
   flip: () => void
@@ -46,11 +51,62 @@ function ensureMinutes(s: DailyStats): DailyStats {
   return { ...s, minutesStudied: s.minutesStudied ?? 0 }
 }
 
+const DEFAULT_GOAL: StudyGoal = {
+  goalType: 'cards',
+  dailyCardTarget: 20,
+  dailyMinutesTarget: 60,
+  currentStreak: 0,
+  longestStreak: 0,
+  lastStudyDate: null,
+}
+
+const defaultTodayStats = (): DailyStats => ({
+  date: getTodayKey(),
+  cardsStudied: 0,
+  cardsCorrect: 0,
+  minutesStudied: 0,
+})
+
 export const useStudyStore = create<StudyStore>((set, get) => ({
   session: null,
   isFlipped: false,
   studyGoal: getStudyGoal(),
   todayStats: ensureMinutes(loadTodayStats()),
+
+  hydrate() {
+    // Carrega do localStorage imediatamente
+    set({
+      studyGoal: getStudyGoal(),
+      todayStats: ensureMinutes(loadTodayStats()),
+    })
+
+    // Reconcilia com Supabase em background
+    const userId = getActiveUserId()
+    if (userId === 'default') return
+    Promise.all([fetchStudyGoal(userId), fetchDailyStats(userId)])
+      .then(([remoteGoal, remoteStats]) => {
+        if (remoteGoal) {
+          localStorage.setItem(`anki_study_goals_${userId}`, JSON.stringify(remoteGoal))
+          set({ studyGoal: remoteGoal })
+        }
+        if (Object.keys(remoteStats).length > 0) {
+          localStorage.setItem(`anki_daily_stats_${userId}`, JSON.stringify(remoteStats))
+          const today = getTodayKey()
+          const todayStat = remoteStats[today] ?? defaultTodayStats()
+          set({ todayStats: ensureMinutes(todayStat) })
+        }
+      })
+      .catch(console.error)
+  },
+
+  reset() {
+    set({
+      session: null,
+      isFlipped: false,
+      studyGoal: DEFAULT_GOAL,
+      todayStats: defaultTodayStats(),
+    })
+  },
 
   startSession(deckId, cardIds) {
     const session: StudySession = {

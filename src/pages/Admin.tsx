@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, Shield, User as UserIcon, Key, Edit2, X, Check } from 'lucide-react'
@@ -10,7 +10,8 @@ import { cn } from '@/lib/utils'
 
 export function Admin() {
   const session = useAuthStore((s) => s.session)
-  const getUsers = useAuthStore((s) => s.getUsers)
+  const users = useAuthStore((s) => s.users)
+  const refreshUsers = useAuthStore((s) => s.refreshUsers)
   const addUser = useAuthStore((s) => s.addUser)
   const deleteUser = useAuthStore((s) => s.deleteUser)
   const updateUser = useAuthStore((s) => s.updateUser)
@@ -18,12 +19,12 @@ export function Admin() {
 
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [, forceUpdate] = useState(0) // trigger re-render after mutations
+
+  useEffect(() => {
+    refreshUsers()
+  }, [refreshUsers])
 
   if (session?.role !== 'admin') return <Navigate to="/" replace />
-
-  const users = getUsers()
-  const refresh = () => forceUpdate((n) => n + 1)
 
   return (
     <div className="animate-fade-up">
@@ -54,9 +55,9 @@ export function Admin() {
             key={user.id}
             user={user}
             isSelf={user.id === session.userId}
-            onDelete={() => { deleteUser(user.id); refresh() }}
-            onUpdate={(updates) => { updateUser(user.id, updates); refresh() }}
-            onClearData={() => { clearUserData(user.id); refresh() }}
+            onDelete={async () => { await deleteUser(user.id) }}
+            onUpdate={async (updates) => { await updateUser(user.id, updates) }}
+            onClearData={async () => { await clearUserData(user.id) }}
             editing={editingId === user.id}
             onEditStart={() => setEditingId(user.id)}
             onEditEnd={() => setEditingId(null)}
@@ -68,9 +69,9 @@ export function Admin() {
       <AddUserModal
         open={showAddForm}
         onClose={() => setShowAddForm(false)}
-        onSubmit={(input) => {
-          const result = addUser(input)
-          if (result.ok) { setShowAddForm(false); refresh() }
+        onAdd={async (input) => {
+          const result = await addUser(input)
+          if (result.ok) setShowAddForm(false)
           return result
         }}
       />
@@ -85,9 +86,9 @@ function UserCard({
 }: {
   user: User
   isSelf: boolean
-  onDelete: () => void
-  onUpdate: (u: { displayName?: string; email?: string; password?: string; role?: UserRole }) => void
-  onClearData: () => void
+  onDelete: () => Promise<void>
+  onUpdate: (u: { displayName?: string; email?: string; password?: string; role?: UserRole }) => Promise<void>
+  onClearData: () => Promise<void>
   editing: boolean
   onEditStart: () => void
   onEditEnd: () => void
@@ -106,8 +107,8 @@ function UserCard({
     .join('')
     .toUpperCase()
 
-  function handleSave() {
-    onUpdate({
+  async function handleSave() {
+    await onUpdate({
       displayName: displayName.trim() || user.displayName,
       email: email.trim(),
       ...(newPassword ? { password: newPassword } : {}),
@@ -242,7 +243,7 @@ function UserCard({
               Excluir <strong>{user.displayName}</strong>? Os dados do usuário permanecerão no localStorage.
             </p>
             <div className="flex gap-2">
-              <Button size="sm" variant="danger" onClick={() => { setShowConfirmDelete(false); onDelete() }}>
+              <Button size="sm" variant="danger" onClick={async () => { setShowConfirmDelete(false); await onDelete() }}>
                 Excluir
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setShowConfirmDelete(false)}>
@@ -266,7 +267,7 @@ function UserCard({
               Apagar todos os dados de <strong>{user.displayName}</strong>? (decks, cards, cronograma, jardim…)
             </p>
             <div className="flex gap-2">
-              <Button size="sm" variant="danger" onClick={() => { setShowConfirmClear(false); onClearData() }}>
+              <Button size="sm" variant="danger" onClick={async () => { setShowConfirmClear(false); await onClearData() }}>
                 Apagar dados
               </Button>
               <Button size="sm" variant="secondary" onClick={() => setShowConfirmClear(false)}>
@@ -283,11 +284,11 @@ function UserCard({
 // ── AddUserModal ──────────────────────────────────────────────────────────────
 
 function AddUserModal({
-  open, onClose, onSubmit,
+  open, onClose, onAdd,
 }: {
   open: boolean
   onClose: () => void
-  onSubmit: (input: CreateUserInput) => { ok: boolean; error?: string }
+  onAdd: (input: CreateUserInput) => Promise<{ ok: boolean; error?: string }>
 }) {
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -303,12 +304,12 @@ function AddUserModal({
 
   function handleClose() { reset(); onClose() }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!username.trim() || !displayName.trim() || !password) {
       setError('Preencha usuário, nome e senha')
       return
     }
-    const result = onSubmit({ username: username.trim(), displayName: displayName.trim(), email: email.trim(), password, role })
+    const result = await onAdd({ username: username.trim(), displayName: displayName.trim(), email: email.trim(), password, role })
     if (!result.ok) { setError(result.error ?? 'Erro'); return }
     reset()
   }
