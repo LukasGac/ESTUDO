@@ -22,17 +22,10 @@ interface AuthStore {
 // ── Listener de autenticação ──────────────────────────────────────────────────
 
 async function resolveSession(userId: string): Promise<AuthSession | null> {
-  const { data, error } = await supabase
-    .from('users')
-    .select('username, role')
-    .eq('id', userId)
-    .single()
-  if (error || !data) return null
-  return {
-    userId,
-    username: data.username as string,
-    role: data.role as UserRole,
-  }
+  const { data, error } = await supabase.rpc('get_my_profile')
+  if (error || !data || (data as unknown[]).length === 0) return null
+  const row = (data as { username: string; role: string }[])[0]
+  return { userId, username: row.username, role: row.role as UserRole }
 }
 
 supabase.auth.onAuthStateChange(async (event, sbSession) => {
