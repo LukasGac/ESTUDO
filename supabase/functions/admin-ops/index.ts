@@ -66,12 +66,6 @@ serve(async (req) => {
         email: syntheticEmail,
         password,
         email_confirm: true,
-        user_metadata: {
-          username: username.trim(),
-          display_name: displayName.trim(),
-          email: email?.trim() || null,
-          role: role ?? 'user',
-        },
       })
 
       if (error) {
@@ -79,6 +73,24 @@ serve(async (req) => {
           ? 'Nome de usuário já existe'
           : error.message
         return new Response(JSON.stringify({ error: msg }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const { error: profileError } = await adminClient
+        .from('users')
+        .insert({
+          id: data.user.id,
+          username: username.trim(),
+          display_name: displayName.trim(),
+          email: email?.trim() || null,
+          role: role ?? 'user',
+        })
+
+      if (profileError) {
+        await adminClient.auth.admin.deleteUser(data.user.id)
+        return new Response(JSON.stringify({ error: profileError.message }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
