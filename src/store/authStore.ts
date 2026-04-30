@@ -22,7 +22,7 @@ interface AuthStore {
 // ── Listener de autenticação ──────────────────────────────────────────────────
 
 async function resolveSession(userId: string): Promise<AuthSession | null> {
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000))
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000))
   const query = supabase.rpc('get_my_profile').then(({ data, error }) => {
     if (error || !data || (data as unknown[]).length === 0) return null
     const row = (data as { username: string; role: string }[])[0]
@@ -64,22 +64,23 @@ export const useAuthStore = create<AuthStore>(() => ({
   users: [],
 
   async login(username, password) {
-    // 1. Resolve o email sintético pelo username via RPC pública
-    const { data: email, error: rpcError } = await supabase.rpc('get_auth_email_by_username', {
-      p_username: username.trim(),
-    })
-    if (rpcError || !email) {
-      return { ok: false, error: 'Usuário não encontrado' }
+    const deadline = new Promise<{ ok: false; error: string }>((resolve) =>
+      setTimeout(() => resolve({ ok: false, error: 'Tempo esgotado. Verifique sua conexão.' }), 12000)
+    )
+
+    const attempt = async (): Promise<{ ok: boolean; error?: string }> => {
+      const { data: email, error: rpcError } = await supabase.rpc('get_auth_email_by_username', {
+        p_username: username.trim(),
+      })
+      if (rpcError || !email) return { ok: false, error: 'Usuário não encontrado' }
+
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) return { ok: false, error: 'Senha incorreta' }
+
+      return { ok: true }
     }
 
-    // 2. Autentica com Supabase Auth
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-    if (authError) {
-      return { ok: false, error: 'Senha incorreta' }
-    }
-
-    // onAuthStateChange dispara SIGNED_IN e atualiza o store
-    return { ok: true }
+    return Promise.race([attempt(), deadline])
   },
 
   async logout() {
