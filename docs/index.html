@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>estudo-concurso — Documentação Técnica</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #111115;
+    --bg3: #18181f;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e8ee;
+    --muted: #8888a0;
+    --subtle: #555568;
+    --accent: #4f8ef7;
+    --accent2: #7c5df7;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #f43f5e;
+    --cyan: #06b6d4;
+    --violet: #8b5cf6;
+    --radius: 10px;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar nav ──────────────────────────────────────────────── */
+  .layout { display: flex; min-height: 100vh; }
+
+  nav.sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 28px 0;
+  }
+  .nav-logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .nav-logo .brand {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .nav-logo .sub { font-size: 11px; color: var(--subtle); margin-top: 2px; }
+  .nav-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    padding: 8px 20px 4px;
+  }
+  nav a {
+    display: block;
+    padding: 6px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 0;
+    transition: color .15s, background .15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  nav a.active { color: var(--accent); background: rgba(79,142,247,.08); }
+
+  /* ── Main content ─────────────────────────────────────────────── */
+  main {
+    flex: 1;
+    min-width: 0;
+    max-width: 900px;
+    padding: 48px 52px 100px;
+  }
+
+  section { margin-bottom: 72px; }
+  section:first-of-type { padding-top: 0; }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .section-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(79,142,247,.1);
+    border: 1px solid rgba(79,142,247,.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-bottom: 10px;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin: 40px 0 14px;
+  }
+  h2:first-child { margin-top: 0; }
+  h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 28px 0 8px;
+    letter-spacing: -0.01em;
+  }
+  p { color: var(--muted); margin-bottom: 12px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); font-weight: 600; }
+
+  .lead {
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 28px;
+  }
+
+  /* ── Stack badges ─────────────────────────────────────────────── */
+  .stack-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+  }
+  .badge.blue   { background: rgba(79,142,247,.1); border-color: rgba(79,142,247,.2); color: #7ba8f8; }
+  .badge.green  { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.2); color: #34d399; }
+  .badge.violet { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.2); color: #a78bfa; }
+  .badge.amber  { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.2); color: #fbbf24; }
+  .badge.cyan   { background: rgba(6,182,212,.1);  border-color: rgba(6,182,212,.2);  color: #22d3ee; }
+  .badge.red    { background: rgba(244,63,94,.1);  border-color: rgba(244,63,94,.2);  color: #fb7185; }
+  .badge.gray   { background: rgba(255,255,255,.05); border-color: var(--border); color: var(--muted); }
+
+  /* ── Module table ─────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 9px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  td {
+    padding: 11px 14px;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  td code, th code { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+  td strong { color: var(--text); }
+
+  /* ── Code blocks ──────────────────────────────────────────────── */
+  .code-block {
+    background: #0c0c10;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 16px 0;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+  }
+  .code-block-header .filename {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .code-block pre {
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0;
+    white-space: pre;
+  }
+  .code-block code { font-family: var(--mono); color: #c9d1d9; }
+
+  /* syntax highlights */
+  .kw  { color: #ff7b72; }
+  .fn  { color: #79c0ff; }
+  .str { color: #a5d6ff; }
+  .cm  { color: #555570; font-style: italic; }
+  .num { color: #f59e0b; }
+  .type{ color: #ffa657; }
+  .const{ color: #d2a8ff; }
+
+  /* ── Annotated code ───────────────────────────────────────────── */
+  .annotated {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 16px 0;
+    font-size: 12.5px;
+  }
+  .ann-code {
+    background: #0c0c10;
+    border-right: 1px solid var(--border);
+    padding: 16px 18px;
+    overflow-x: auto;
+  }
+  .ann-code pre { margin: 0; white-space: pre; }
+  .ann-code code { font-family: var(--mono); color: #c9d1d9; }
+  .ann-notes { padding: 16px 18px; background: var(--bg2); }
+  .ann-note {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .ann-note:last-child { border-bottom: none; padding-bottom: 0; }
+  .ann-note .num-badge {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(79,142,247,.15);
+    border: 1px solid rgba(79,142,247,.3);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    margin-top: 1px;
+  }
+  .ann-note .note-text { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+  .ann-note .note-text strong { color: var(--text); }
+
+  /* ── Flow diagram ─────────────────────────────────────────────── */
+  .flow-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+  .flow { display: flex; flex-direction: column; gap: 24px; align-items: flex-start; }
+
+  .flow-row { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; }
+  .flow-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    font-family: var(--mono);
+  }
+  .fn-entry  { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.25); color: #34d399; }
+  .fn-auth   { background: rgba(79,142,247,.1); border-color: rgba(79,142,247,.25); color: #7ba8f8; }
+  .fn-store  { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.25); color: #a78bfa; }
+  .fn-page   { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.25); color: #fbbf24; }
+  .fn-srs    { background: rgba(244,63,94,.1);  border-color: rgba(244,63,94,.25);  color: #fb7185; }
+  .fn-db     { background: rgba(6,182,212,.1);  border-color: rgba(6,182,212,.2);   color: #22d3ee; }
+  .fn-local  { background: rgba(255,255,255,.05); border-color: var(--border2); color: var(--muted); }
+
+  .flow-arrow {
+    color: var(--subtle);
+    font-size: 18px;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .flow-branch {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-left: 2px solid var(--border);
+    padding-left: 20px;
+    margin-left: 8px;
+  }
+  .flow-sublabel {
+    font-size: 11px;
+    color: var(--subtle);
+    font-family: var(--mono);
+    align-self: center;
+    padding: 0 6px;
+  }
+  .flow-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 4px;
+  }
+  .flow-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .flow-group-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 8px;
+  }
+  .flow-parallel { display: flex; gap: 12px; align-items: flex-start; }
+
+  /* ── Gotcha cards ─────────────────────────────────────────────── */
+  .gotcha-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+  .gotcha-card {
+    display: flex;
+    gap: 16px;
+    padding: 16px 18px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color .15s;
+  }
+  .gotcha-card:hover { border-color: var(--border2); }
+  .gotcha-num {
+    flex-shrink: 0;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: rgba(244,63,94,.12);
+    border: 1px solid rgba(244,63,94,.2);
+    color: #fb7185;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .gotcha-body { flex: 1; }
+  .gotcha-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 5px;
+    line-height: 1.4;
+  }
+  .gotcha-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .gotcha-desc code {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--accent);
+  }
+
+  /* ── Module section ───────────────────────────────────────────── */
+  .module-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+  .module-header {
+    padding: 14px 20px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .module-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+  }
+  .module-header h3 { margin: 0; font-size: 14px; }
+  .module-header .filepath {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--subtle);
+    margin-left: auto;
+  }
+  .module-body { padding: 20px; }
+
+  /* ── SRS diagram ──────────────────────────────────────────────── */
+  .srs-states {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .srs-state {
+    text-align: center;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+  }
+  .srs-state .label { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .srs-state .cond  { font-size: 10.5px; color: var(--subtle); font-family: var(--mono); }
+  .srs-arrow-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 4px; }
+  .srs-arrow-col .arr { color: var(--subtle); font-size: 16px; }
+  .srs-arrow-col .lbl { font-size: 9.5px; color: var(--subtle); font-family: var(--mono); text-align: center; white-space: nowrap; }
+
+  /* ── Key/val pairs ────────────────────────────────────────────── */
+  .kv-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 14px 0; }
+  .kv-row { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-key { width: 200px; flex-shrink: 0; padding: 9px 14px; font-family: var(--mono); font-size: 11.5px; color: var(--accent); background: var(--bg2); border-right: 1px solid var(--border); }
+  .kv-val { padding: 9px 14px; font-size: 12.5px; color: var(--muted); }
+  .kv-val code { font-family: var(--mono); font-size: 11px; background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; color: var(--text); }
+
+  /* ── Divider ──────────────────────────────────────────────────── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ── Scrollbar ────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* ── Responsive ───────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    nav.sidebar { display: none; }
+    main { padding: 32px 24px 80px; }
+    .annotated { grid-template-columns: 1fr; }
+    .ann-code { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+<nav class="sidebar">
+  <div class="nav-logo">
+    <div class="brand">estudo-concurso</div>
+    <div class="sub">Documentação técnica</div>
+  </div>
+
+  <div class="nav-section-title">Seções</div>
+  <a href="#overview">Visão geral</a>
+  <a href="#flow">Fluxo da aplicação</a>
+  <a href="#modules">Módulos críticos</a>
+  <a href="#srs-module">↳ Algoritmo SRS</a>
+  <a href="#storage-module">↳ Storage Layer</a>
+  <a href="#deck-store">↳ deckStore</a>
+  <a href="#auth-store">↳ authStore</a>
+  <a href="#migration-module">↳ Migration</a>
+  <a href="#gotchas">Gotchas</a>
+</nav>
+
+<!-- ── Main ────────────────────────────────────────────────────────── -->
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION 1 — VISÃO GERAL
+════════════════════════════════════════════════════════════════════ -->
+<section id="overview">
+  <div class="section-tag">Visão Geral</div>
+  <h1>estudo-concurso</h1>
+
+  <p class="lead">
+    SPA de flashcards com <strong>Spaced Repetition System (SRS)</strong> para preparação de concursos públicos.
+    O usuário estuda baralhos de cards (decks), avalia cada card como <em>Errei / Difícil / Acertei</em>,
+    e o algoritmo calcula automaticamente quando aquele card deve aparecer novamente — priorizando
+    o que está mais fresco na memória de curto prazo.
+  </p>
+
+  <div class="stack-row">
+    <span class="badge blue">React 18</span>
+    <span class="badge blue">TypeScript strict</span>
+    <span class="badge cyan">Vite 5</span>
+    <span class="badge violet">Zustand 4</span>
+    <span class="badge green">Supabase</span>
+    <span class="badge amber">Framer Motion</span>
+    <span class="badge gray">Tailwind CSS</span>
+    <span class="badge gray">React Router 6</span>
+    <span class="badge gray">Vitest</span>
+  </div>
+
+  <h2>Partes principais</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Camada</th>
+          <th>O que faz</th>
+          <th>Arquivos-chave</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Core de Estudo</strong></td>
+          <td>Algoritmo SRS (SM-2 modificado): calcula próximo intervalo, constrói a fila de revisão, computa estatísticas de baralho</td>
+          <td><code>src/lib/srs.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Persistência</strong></td>
+          <td>Camada dual: localStorage síncrono + Supabase assíncrono. Namespace por usuário (<code>anki_decks_&lt;userId&gt;</code>). Mappers snake_case ↔ camelCase</td>
+          <td><code>src/lib/storage.ts</code>, <code>src/lib/db.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Estado global</strong></td>
+          <td>6 stores Zustand independentes. Cada store tem <code>hydrate()</code> que carrega localStorage imediatamente e reconcilia com Supabase em background</td>
+          <td><code>src/store/*Store.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Auth</strong></td>
+          <td>Supabase Auth com usuário/senha. Listener <code>onAuthStateChange</code> no nível de módulo. Login via 2 chamadas: RPC para resolver email → <code>signInWithPassword</code></td>
+          <td><code>src/store/authStore.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Pages/Rotas</strong></td>
+          <td>4 rotas protegidas (Dashboard, Study, Manage, Schedule, Focus, Admin) + rota pública de Login. Guards via componentes</td>
+          <td><code>src/App.tsx</code>, <code>src/pages/*</code></td>
+        </tr>
+        <tr>
+          <td><strong>Features extras</strong></td>
+          <td>Pomodoro (widget flutuante, ciclos configuráveis), Cronograma semanal (grade por dia/hora), Modo Foco com dinossauros evoluíveis (baby → elder)</td>
+          <td><code>src/store/pomodoroStore.ts</code>, <code>src/store/scheduleStore.ts</code>, <code>src/store/focusStore.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Tipos</strong></td>
+          <td>Todos os tipos compartilhados. Inclui <code>Card</code>, <code>Deck</code>, <code>StudySession</code>, <code>SRSResult</code>, <code>User</code>, <code>Pomodoro</code>, <code>Schedule</code>, <code>Dino</code></td>
+          <td><code>src/types/index.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Dados de seed</strong></td>
+          <td>Baralhos pré-populados para Direito Constitucional e concurso Petrobras (Língua Portuguesa, etc.)</td>
+          <td><code>src/data/seed.ts</code>, <code>src/data/petrobras.ts</code></td>
+        </tr>
+        <tr>
+          <td><strong>Testes</strong></td>
+          <td>135+ testes com Vitest + Testing Library. Cobertura em <code>srs.ts</code>, <code>storage.ts</code>, <code>deckStore</code>, <code>studyStore</code>, <code>streak.ts</code></td>
+          <td><code>src/test/*.test.ts</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Como os 6 stores se relacionam</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Store</th><th>Responsabilidade</th><th>Depende de</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>authStore</code></td>
+          <td>Sessão Supabase, usuários, login/logout, admin ops via Edge Function</td>
+          <td><code>supabase</code>, <code>storage.setActiveUser</code></td>
+        </tr>
+        <tr>
+          <td><code>deckStore</code></td>
+          <td>CRUD de decks e cards, aplicação de ratings, cálculo de stats</td>
+          <td><code>srs.ts</code>, <code>storage.ts</code>, <code>db.ts</code></td>
+        </tr>
+        <tr>
+          <td><code>studyStore</code></td>
+          <td>Sessão de estudo ativa, flip/rate, stats diárias, streak, meta</td>
+          <td><code>deckStore.applyRating</code>, <code>storage.ts</code>, <code>db.ts</code></td>
+        </tr>
+        <tr>
+          <td><code>pomodoroStore</code></td>
+          <td>Timer pomodoro, ciclos, configurações</td>
+          <td><code>storage.ts</code>, <code>db.ts</code></td>
+        </tr>
+        <tr>
+          <td><code>scheduleStore</code></td>
+          <td>Entradas do cronograma semanal, marcações de conclusão</td>
+          <td><code>storage.ts</code>, <code>db.ts</code></td>
+        </tr>
+        <tr>
+          <td><code>focusStore</code></td>
+          <td>Sessão de foco com dinossauro, coleção de dinos ganhos</td>
+          <td><code>storage.ts</code>, <code>db.ts</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION 2 — FLUXO PRINCIPAL
+════════════════════════════════════════════════════════════════════ -->
+<section id="flow">
+  <div class="section-tag">Fluxo</div>
+  <h1>Fluxo da aplicação</h1>
+  <p class="lead">Do ponto de entrada até a persistência, passando pelo ciclo completo de uma sessão de estudo.</p>
+
+  <div class="flow-wrap">
+    <div class="flow">
+
+      <!-- Boot -->
+      <div>
+        <div class="flow-section-label">Boot</div>
+        <div class="flow-row">
+          <div class="flow-node fn-entry">main.tsx</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-entry">App.tsx</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-auth">authStore criado</div>
+          <div class="flow-sublabel">módulo importado →<br>onAuthStateChange registrado</div>
+        </div>
+      </div>
+
+      <!-- Auth -->
+      <div>
+        <div class="flow-section-label">Autenticação</div>
+        <div class="flow-row">
+          <div class="flow-node fn-auth">INITIAL_SESSION dispara</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-auth">resolveSession(userId)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-db">RPC get_my_profile</div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center; padding-left:20px;">
+          <div class="flow-sublabel">↳ ok:</div>
+          <div class="flow-node fn-auth" style="font-size:11.5px;">setActiveUser(userId)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-store" style="font-size:11.5px;">hydrate() em todos os stores</div>
+        </div>
+        <div style="margin-top:6px; display:flex; gap:10px; align-items:center; padding-left:20px;">
+          <div class="flow-sublabel">↳ erro/timeout:</div>
+          <div class="flow-node fn-auth" style="font-size:11.5px; background:rgba(244,63,94,.08); border-color:rgba(244,63,94,.2); color:#fb7185;">signOut() → tela de login</div>
+        </div>
+      </div>
+
+      <!-- Hydrate -->
+      <div>
+        <div class="flow-section-label">Hydrate dos Stores (executado em paralelo)</div>
+        <div class="flow-row" style="flex-wrap:wrap; gap:8px;">
+          <div class="flow-node fn-store" style="font-size:11.5px;">① localStorage (síncrono)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-store" style="font-size:11.5px;">UI visível imediatamente</div>
+        </div>
+        <div class="flow-row" style="flex-wrap:wrap; gap:8px; margin-top:6px;">
+          <div class="flow-node fn-db" style="font-size:11.5px;">② fetchDecks + fetchCards (Supabase)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-local" style="font-size:11.5px;">sobrescreve localStorage</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-store" style="font-size:11.5px;">set({ decks, cards })</div>
+        </div>
+      </div>
+
+      <!-- Study flow -->
+      <div>
+        <div class="flow-section-label">Sessão de Estudo — /study/:deckId</div>
+        <div class="flow-group">
+          <div class="flow-group-title">1. Montagem da fila</div>
+          <div class="flow-row">
+            <div class="flow-node fn-page">Study page monta</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-store">getStudyQueue(deckId)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-srs">buildStudyQueue(cards)</div>
+          </div>
+          <div style="font-size:11.5px; color:var(--subtle); padding: 4px 0 0 4px; font-family:var(--mono);">
+            filtra: status ≠ mastered &amp;&amp; dueDate ≤ hoje &nbsp;·&nbsp; ordena: learning &gt; new &gt; review
+          </div>
+        </div>
+
+        <div class="flow-group" style="margin-top:10px;">
+          <div class="flow-group-title">2. Loop de revisão por card</div>
+          <div class="flow-row">
+            <div class="flow-node fn-page">Exibe FlashCard (front)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-page">Usuário pressiona Espaço</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-page">studyStore.flip()</div>
+          </div>
+          <div class="flow-row" style="margin-top:8px;">
+            <div class="flow-node fn-page">Exibe FlashCard (back) + RatingButtons</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-page">Usuário pressiona 1/2/3</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-store">studyStore.rateCard(rating)</div>
+          </div>
+          <div class="flow-row" style="margin-top:8px; padding-left:16px;">
+            <div class="flow-arrow" style="padding:0 0 0 4px;">↓</div>
+          </div>
+          <div class="flow-row" style="flex-wrap:wrap; gap:8px;">
+            <div class="flow-node fn-store">deckStore.applyRating(cardId, rating)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-srs">calculateNextReview(card, rating)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-local">localStorage (síncrono)</div>
+            <div class="flow-arrow">+</div>
+            <div class="flow-node fn-db">Supabase upsertCard (async)</div>
+          </div>
+          <div style="font-size:11px; color:rgba(244,63,94,.7); padding: 6px 4px 0; font-family:var(--mono);">
+            ⚠ se rating === 'wrong': card é reinserido em queue[currentIndex + 3], não no fim
+          </div>
+        </div>
+
+        <div class="flow-group" style="margin-top:10px;">
+          <div class="flow-group-title">3. Fim de sessão (nextIndex ≥ queue.length)</div>
+          <div class="flow-row" style="flex-wrap:wrap; gap:8px;">
+            <div class="flow-node fn-store">calcula sessionMinutes (cap: 120min)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-store">atualiza DailyStats</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-store">updateStreak (se meta atingida)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node fn-db">saveDailyStats → Supabase</div>
+          </div>
+          <div class="flow-row" style="margin-top:8px;">
+            <div class="flow-node fn-page">Tela de conclusão (acerto %, streak, cards revisados)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION 3 — MÓDULOS CRÍTICOS
+════════════════════════════════════════════════════════════════════ -->
+<section id="modules">
+  <div class="section-tag">Módulos Críticos</div>
+  <h1>Módulos críticos</h1>
+  <p class="lead">Os 5 módulos que você precisa entender para não perder uma tarde depurando comportamentos não óbvios.</p>
+
+  <!-- ── 1. SRS ─────────────────────────────────────────────────────── -->
+  <div class="module-card" id="srs-module">
+    <div class="module-header">
+      <div class="module-num" style="background:rgba(244,63,94,.15); color:#fb7185; border:1px solid rgba(244,63,94,.25);">1</div>
+      <h3>Algoritmo SRS — SM-2 modificado</h3>
+      <span class="filepath">src/lib/srs.ts</span>
+    </div>
+    <div class="module-body">
+      <p>Implementação do algoritmo SuperMemo 2 com ajustes. A função central é <code style="font-family:var(--mono);font-size:12px;">calculateNextReview</code> — ela recebe o estado atual do card e o rating, e retorna o novo estado.</p>
+
+      <h3>Constantes do algoritmo</h3>
+      <div class="kv-list">
+        <div class="kv-row"><div class="kv-key">INITIAL_EASE_FACTOR</div><div class="kv-val"><code>2.0</code> — fator de facilidade inicial de todo card novo</div></div>
+        <div class="kv-row"><div class="kv-key">MIN / MAX ease</div><div class="kv-val"><code>1.3</code> / <code>2.5</code> — limites do ease factor para evitar intervalos degenerados</div></div>
+        <div class="kv-row"><div class="kv-key">WRONG_EASE_DELTA</div><div class="kv-val"><code>-0.2</code> — errar penaliza o ease factor (card fica mais frequente)</div></div>
+        <div class="kv-row"><div class="kv-key">HARD_EASE_DELTA</div><div class="kv-val"><code>-0.15</code> — difícil também penaliza, porém menos</div></div>
+        <div class="kv-row"><div class="kv-key">CORRECT_EASE_DELTA</div><div class="kv-val"><code>+0.1</code> — acertar melhora o ease factor levemente</div></div>
+        <div class="kv-row"><div class="kv-key">HARD_INTERVAL_MULTIPLIER</div><div class="kv-val"><code>0.5</code> — intervalo é reduzido à metade quando "difícil"</div></div>
+        <div class="kv-row"><div class="kv-key">MASTERED_REPETITIONS</div><div class="kv-val"><code>5</code> — mínimo de acertos consecutivos para "dominado"</div></div>
+        <div class="kv-row"><div class="kv-key">MASTERED_MIN_INTERVAL</div><div class="kv-val"><code>21 dias</code> — intervalo mínimo para "dominado" (ambos obrigatórios)</div></div>
+      </div>
+
+      <h3>Transições de status</h3>
+      <div class="srs-states">
+        <div class="srs-state" style="background:rgba(79,142,247,.1); border-color:rgba(79,142,247,.25); color:#7ba8f8;">
+          <div class="label">new</div>
+          <div class="cond">intervalDays=0<br>reps=0</div>
+        </div>
+        <div class="srs-arrow-col">
+          <div class="arr">→</div>
+          <div class="lbl">acertei/difícil<br>reps &lt; 2</div>
+        </div>
+        <div class="srs-state" style="background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.25); color:#fbbf24;">
+          <div class="label">learning</div>
+          <div class="cond">reps 0–1<br>ou errou</div>
+        </div>
+        <div class="srs-arrow-col">
+          <div class="arr">→</div>
+          <div class="lbl">acertei<br>reps ≥ 2</div>
+        </div>
+        <div class="srs-state" style="background:rgba(139,92,246,.1); border-color:rgba(139,92,246,.25); color:#a78bfa;">
+          <div class="label">review</div>
+          <div class="cond">reps ≥ 2<br>intervalo cresce</div>
+        </div>
+        <div class="srs-arrow-col">
+          <div class="arr">→</div>
+          <div class="lbl">reps ≥ 5 E<br>interval ≥ 21d</div>
+        </div>
+        <div class="srs-state" style="background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.25); color:#34d399;">
+          <div class="label">mastered</div>
+          <div class="cond">excluído da<br>fila de estudo</div>
+        </div>
+        <div class="srs-arrow-col">
+          <div class="arr">→</div>
+          <div class="lbl">errou<br>(qualquer status)</div>
+        </div>
+        <div class="srs-state" style="background:rgba(244,63,94,.1); border-color:rgba(244,63,94,.25); color:#fb7185;">
+          <div class="label">learning</div>
+          <div class="cond">reset reps=0<br>interval=0</div>
+        </div>
+      </div>
+
+      <h3>calculateNextReview — código anotado</h3>
+      <div class="annotated">
+        <div class="ann-code">
+          <pre><code><span class="kw">export function</span> <span class="fn">calculateNextReview</span>(card: Card, rating: Rating): SRSResult {
+  <span class="kw">let</span> { intervalDays, easeFactor, repetitions } = card
+
+  <span class="kw">if</span> (rating === <span class="str">'wrong'</span>) {                        <span class="cm">// ①</span>
+    easeFactor = <span class="fn">clamp</span>(easeFactor + SRS.WRONG_EASE_DELTA,
+                        SRS.MIN_EASE_FACTOR, SRS.MAX_EASE_FACTOR)
+    repetitions = <span class="num">0</span>
+    intervalDays = <span class="num">0</span>                              <span class="cm">// ②</span>
+  } <span class="kw">else if</span> (rating === <span class="str">'hard'</span>) {
+    easeFactor = <span class="fn">clamp</span>(easeFactor + SRS.HARD_EASE_DELTA, ...)
+    intervalDays = card.status === <span class="str">'new'</span>
+      ? <span class="num">1</span>
+      : Math.<span class="fn">max</span>(<span class="num">1</span>, Math.<span class="fn">round</span>(intervalDays * SRS.HARD_INTERVAL_MULTIPLIER))
+  } <span class="kw">else</span> {                                            <span class="cm">// correct</span>
+    easeFactor = <span class="fn">clamp</span>(easeFactor + SRS.CORRECT_EASE_DELTA, ...)
+    repetitions += <span class="num">1</span>
+    <span class="kw">if</span> (card.status === <span class="str">'new'</span> || repetitions === <span class="num">1</span>) {   <span class="cm">// ③</span>
+      intervalDays = <span class="num">1</span>
+    } <span class="kw">else</span> {
+      intervalDays = Math.<span class="fn">max</span>(<span class="num">1</span>, Math.<span class="fn">round</span>(intervalDays * easeFactor)) <span class="cm">// ④</span>
+    }
+  }
+
+  <span class="cm">// Status transition</span>
+  <span class="kw">let</span> newStatus: CardStatus
+  <span class="kw">if</span> (rating === <span class="str">'wrong'</span>) {
+    newStatus = <span class="str">'learning'</span>
+  } <span class="kw">else if</span> (repetitions >= SRS.MASTERED_REPETITIONS
+           && intervalDays >= SRS.MASTERED_MIN_INTERVAL) {   <span class="cm">// ⑤</span>
+    newStatus = <span class="str">'mastered'</span>
+  } <span class="kw">else if</span> (repetitions >= <span class="num">2</span>) {
+    newStatus = <span class="str">'review'</span>
+  } <span class="kw">else</span> {
+    newStatus = <span class="str">'learning'</span>
+  }
+
+  <span class="kw">const</span> dueDate = intervalDays === <span class="num">0</span> ? now : <span class="fn">addDays</span>(now, intervalDays)
+  <span class="kw">return</span> { newIntervalDays, newEaseFactor, newRepetitions, newStatus, newDueDate }
+}</code></pre>
+        </div>
+        <div class="ann-notes">
+          <div class="ann-note">
+            <div class="num-badge">①</div>
+            <div class="note-text"><strong>Wrong sempre vira learning.</strong> Ease factor penalizado em -0.2. Repetições e intervalo resetam para zero.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">②</div>
+            <div class="note-text"><strong>intervalDays = 0 significa "agora".</strong> O card entra na fila novamente ainda na mesma sessão (3 posições à frente).</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">③</div>
+            <div class="note-text"><strong>Primeiros 1–2 acertos</strong> sempre forçam intervalo de 1 dia, independente do ease factor. Evita intervalos gigantes logo no início.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">④</div>
+            <div class="note-text"><strong>Crescimento exponencial via ease factor:</strong> <code style="font-family:var(--mono);font-size:11px;">interval × easeFactor</code>. Com ease=2.0 e interval=10 dias, próximo é ~20 dias.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">⑤</div>
+            <div class="note-text"><strong>Mastered requer AMBAS as condições:</strong> repetições ≥ 5 <em>e</em> intervalo ≥ 21 dias. Só uma delas não é suficiente.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. Storage ─────────────────────────────────────────────────── -->
+  <div class="module-card" id="storage-module">
+    <div class="module-header">
+      <div class="module-num" style="background:rgba(6,182,212,.15); color:#22d3ee; border:1px solid rgba(6,182,212,.25);">2</div>
+      <h3>Storage Layer — persistência dual</h3>
+      <span class="filepath">src/lib/storage.ts + src/lib/db.ts</span>
+    </div>
+    <div class="module-body">
+      <p>Toda persistência passa por <code style="font-family:var(--mono);font-size:12px;">storage.ts</code>. Ele grava no localStorage de forma síncrona e chama o <code style="font-family:var(--mono);font-size:12px;">db.ts</code> de forma assíncrona (fire-and-forget) quando há um usuário autenticado.</p>
+
+      <h3>Namespace por usuário</h3>
+      <p>As chaves no localStorage são prefixadas com o userId para isolar dados entre usuários no mesmo browser:</p>
+
+      <div class="kv-list">
+        <div class="kv-row"><div class="kv-key">anki_decks_&lt;userId&gt;</div><div class="kv-val">Todos os baralhos do usuário</div></div>
+        <div class="kv-row"><div class="kv-key">anki_cards_&lt;userId&gt;</div><div class="kv-val">Todos os cards (record plano, indexado por id)</div></div>
+        <div class="kv-row"><div class="kv-key">anki_session_&lt;userId&gt;</div><div class="kv-val">Sessão de estudo em andamento (ou null)</div></div>
+        <div class="kv-row"><div class="kv-key">anki_study_goals_&lt;userId&gt;</div><div class="kv-val">Meta diária de cards/minutos + streak</div></div>
+        <div class="kv-row"><div class="kv-key">anki_daily_stats_&lt;userId&gt;</div><div class="kv-val">Histórico de estatísticas por dia (YYYY-MM-DD → DailyStats)</div></div>
+        <div class="kv-row"><div class="kv-key">anki_meta_&lt;userId&gt;</div><div class="kv-val">Versão dos dados, flag de inicialização</div></div>
+        <div class="kv-row" style="background:rgba(244,63,94,.05);">
+          <div class="kv-key" style="color:#fb7185;">anki_users</div>
+          <div class="kv-val"><strong style="color:#fb7185;">Sem namespace</strong> — global no browser. Lista de usuários (admin)</div>
+        </div>
+        <div class="kv-row" style="background:rgba(244,63,94,.05);">
+          <div class="kv-key" style="color:#fb7185;">anki_auth_session</div>
+          <div class="kv-val"><strong style="color:#fb7185;">Sem namespace</strong> — sessão de auth global (legado, Supabase gerencia a sessão atual)</div>
+        </div>
+      </div>
+
+      <h3>Write-through pattern</h3>
+      <div class="annotated">
+        <div class="ann-code">
+          <pre><code><span class="kw">export function</span> <span class="fn">saveCard</span>(card: Card): <span class="type">void</span> {
+  <span class="kw">const</span> all = <span class="fn">getCards</span>()
+  all[card.id] = card
+  localStorage.<span class="fn">setItem</span>(<span class="fn">u</span>(<span class="str">'anki_cards'</span>), JSON.<span class="fn">stringify</span>(all)) <span class="cm">// ①</span>
+  <span class="kw">if</span> (_userId !== <span class="str">'default'</span>) {               <span class="cm">// ②</span>
+    db.<span class="fn">upsertCard</span>(card, _userId).<span class="fn">catch</span>(console.error) <span class="cm">// ③</span>
+  }
+}
+
+<span class="cm">// Namespace helper</span>
+<span class="kw">function</span> <span class="fn">u</span>(base: <span class="type">string</span>): <span class="type">string</span> {
+  <span class="kw">return</span> <span class="str">`${base}_${_userId}`</span>    <span class="cm">// ④</span>
+}
+
+<span class="kw">export function</span> <span class="fn">setActiveUser</span>(userId: <span class="type">string</span>): <span class="type">void</span> {
+  _userId = userId     <span class="cm">// ⑤</span>
+}</code></pre>
+        </div>
+        <div class="ann-notes">
+          <div class="ann-note">
+            <div class="num-badge">①</div>
+            <div class="note-text"><strong>localStorage primeiro, sempre síncrono.</strong> A UI nunca espera o Supabase para mostrar o resultado de uma ação.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">②</div>
+            <div class="note-text"><strong>Guard de usuário autenticado.</strong> Se <code style="font-family:var(--mono);font-size:11px;">_userId === 'default'</code>, o app está em modo offline e não tenta sincronizar.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">③</div>
+            <div class="note-text"><strong>Fire-and-forget.</strong> Erros de rede são logados mas não propagados. Supabase pode estar desatualizado temporariamente.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">④</div>
+            <div class="note-text"><strong>Namespace dinâmico.</strong> O userId é um módulo-level var mutável. Muda quando o usuário faz login/logout via <code style="font-family:var(--mono);font-size:11px;">setActiveUser()</code>.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">⑤</div>
+            <div class="note-text"><strong>Chamado por <code style="font-family:var(--mono);font-size:11px;">authStore</code></strong> no evento SIGNED_IN. O momento em que isso é chamado determina quais chaves serão lidas/gravadas dali em diante.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>db.ts — mappers snake_case ↔ camelCase</h3>
+      <p>O Supabase usa snake_case no banco. O TypeScript usa camelCase. O <code style="font-family:var(--mono);font-size:12px;">db.ts</code> mantém pares de funções <code style="font-family:var(--mono);font-size:12px;">cardFromDb</code> / <code style="font-family:var(--mono);font-size:12px;">cardToDb</code> para cada entidade. Lotes de cards são enviados em chunks de 500 para evitar payload excessivo.</p>
+    </div>
+  </div>
+
+  <!-- ── 3. deckStore ───────────────────────────────────────────────── -->
+  <div class="module-card" id="deck-store">
+    <div class="module-header">
+      <div class="module-num" style="background:rgba(139,92,246,.15); color:#a78bfa; border:1px solid rgba(139,92,246,.25);">3</div>
+      <h3>deckStore — hydrate + applyRating</h3>
+      <span class="filepath">src/store/deckStore.ts</span>
+    </div>
+    <div class="module-body">
+      <p>Store central para decks e cards. O padrão de hidratação é o coração do sistema de sincronização.</p>
+
+      <div class="annotated">
+        <div class="ann-code">
+          <pre><code><span class="fn">hydrate</span>() {
+  <span class="cm">// Carrega localStorage imediatamente</span>
+  <span class="kw">const</span> localDecks = <span class="fn">getDecks</span>()
+  <span class="kw">const</span> localCards = <span class="fn">getCards</span>()
+  <span class="fn">set</span>({ decks: localDecks, cards: localCards })  <span class="cm">// ①</span>
+
+  <span class="kw">const</span> userId = <span class="fn">getActiveUserId</span>()
+  <span class="kw">if</span> (userId === <span class="str">'default'</span>) <span class="kw">return</span>  <span class="cm">// ②</span>
+
+  Promise.<span class="fn">all</span>([<span class="fn">fetchDecks</span>(userId), <span class="fn">fetchCards</span>(userId)])
+    .<span class="fn">then</span>(([remoteDecks, remoteCards]) => {
+      <span class="kw">if</span> (Object.<span class="fn">keys</span>(remoteDecks).length > <span class="num">0</span>
+       || Object.<span class="fn">keys</span>(remoteCards).length > <span class="num">0</span>) {  <span class="cm">// ③</span>
+        localStorage.<span class="fn">setItem</span>(`anki_decks_${userId}`,
+                               JSON.<span class="fn">stringify</span>(remoteDecks))
+        localStorage.<span class="fn">setItem</span>(`anki_cards_${userId}`,
+                               JSON.<span class="fn">stringify</span>(remoteCards))
+        <span class="fn">set</span>({ decks: remoteDecks, cards: remoteCards })  <span class="cm">// ④</span>
+      }
+    })
+},
+
+<span class="fn">applyRating</span>(cardId, rating) {
+  <span class="kw">const</span> result = <span class="fn">calculateNextReview</span>(card, rating)
+  <span class="kw">const</span> updated = { ...card, ...result }
+  <span class="kw">const</span> updatedCards = { ...cards, [cardId]: updated }
+  <span class="fn">saveAllCards</span>(updatedCards)  <span class="cm">// ⑤</span>
+  <span class="fn">set</span>({ cards: updatedCards })
+},</code></pre>
+        </div>
+        <div class="ann-notes">
+          <div class="ann-note">
+            <div class="num-badge">①</div>
+            <div class="note-text"><strong>UI responsiva imediata.</strong> O usuário vê seus dados no mesmo frame. Sem loading spinner para dados que já existem localmente.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">②</div>
+            <div class="note-text"><strong>Modo offline.</strong> Se não há userId real, não tenta acessar Supabase. O app funciona completamente offline com localStorage.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">③</div>
+            <div class="note-text"><strong>Guard contra sobrescrita vazia.</strong> Só atualiza se Supabase retornou dados. Usuário novo (sem dados remotos) mantém o localStorage.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">④</div>
+            <div class="note-text"><strong>Supabase é a fonte de verdade.</strong> Se há dados remotos, eles substituem o localStorage silenciosamente. Mudanças feitas offline antes do sync são perdidas.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">⑤</div>
+            <div class="note-text"><strong>saveAllCards, não saveCard.</strong> A cada rating, todos os cards são re-serializados no localStorage. Correto mas O(n) — ver Gotchas.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. authStore ───────────────────────────────────────────────── -->
+  <div class="module-card" id="auth-store">
+    <div class="module-header">
+      <div class="module-num" style="background:rgba(79,142,247,.15); color:#7ba8f8; border:1px solid rgba(79,142,247,.25);">4</div>
+      <h3>authStore — Auth flow com listener global</h3>
+      <span class="filepath">src/store/authStore.ts</span>
+    </div>
+    <div class="module-body">
+      <p>O fluxo de autenticação é orientado a eventos, não a chamadas imperativas. O listener é registrado no momento em que o módulo é importado (antes do React montar).</p>
+
+      <div class="annotated">
+        <div class="ann-code">
+          <pre><code><span class="cm">// Registrado no nível do módulo, não dentro do store</span>
+supabase.auth.<span class="fn">onAuthStateChange</span>(<span class="kw">async</span> (event, sbSession) => {  <span class="cm">// ①</span>
+  <span class="kw">if</span> (event === <span class="str">'INITIAL_SESSION'</span> || event === <span class="str">'SIGNED_IN'</span>) {
+    <span class="kw">if</span> (sbSession?.user) {
+      <span class="kw">const</span> session = <span class="kw">await</span> <span class="fn">resolveSession</span>(sbSession.user.id)  <span class="cm">// ②</span>
+      <span class="kw">if</span> (session) {
+        <span class="fn">setActiveUser</span>(session.userId)
+        useAuthStore.<span class="fn">setState</span>({ session, isLoading: <span class="kw">false</span> })
+      } <span class="kw">else</span> {
+        <span class="kw">await</span> supabase.auth.<span class="fn">signOut</span>()   <span class="cm">// ③</span>
+        useAuthStore.<span class="fn">setState</span>({ session: <span class="kw">null</span>, isLoading: <span class="kw">false</span> })
+      }
+    }
+  } <span class="kw">else if</span> (event === <span class="str">'SIGNED_OUT'</span>) {
+    <span class="fn">setActiveUser</span>(<span class="str">'default'</span>)
+    useAuthStore.<span class="fn">setState</span>({ session: <span class="kw">null</span>, isLoading: <span class="kw">false</span> })
+  }
+})
+
+<span class="kw">async function</span> <span class="fn">resolveSession</span>(userId): <span class="type">Promise</span>&lt;AuthSession | null&gt; {
+  <span class="kw">const</span> timeout = <span class="kw">new</span> <span class="type">Promise</span>(resolve =>
+    <span class="fn">setTimeout</span>(() => <span class="fn">resolve</span>(<span class="kw">null</span>), <span class="num">15000</span>))  <span class="cm">// ④</span>
+  <span class="kw">const</span> query = supabase.<span class="fn">rpc</span>(<span class="str">'get_my_profile'</span>).<span class="fn">then</span>(...)
+  <span class="kw">return</span> Promise.<span class="fn">race</span>([query, timeout])
+}
+
+<span class="cm">// login(): 2 passos</span>
+<span class="kw">async</span> <span class="fn">login</span>(username, password) {
+  <span class="kw">const</span> { data: email } = <span class="kw">await</span> supabase
+    .<span class="fn">rpc</span>(<span class="str">'get_auth_email_by_username'</span>, { p_username: username })  <span class="cm">// ⑤</span>
+  <span class="kw">await</span> supabase.auth.<span class="fn">signInWithPassword</span>({ email, password })
+}</code></pre>
+        </div>
+        <div class="ann-notes">
+          <div class="ann-note">
+            <div class="num-badge">①</div>
+            <div class="note-text"><strong>Listener no nível de módulo.</strong> Registrado quando o arquivo é importado — antes do React renderizar qualquer componente. Garante que o INITIAL_SESSION não seja perdido.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">②</div>
+            <div class="note-text"><strong>resolveSession</strong> busca o perfil do usuário via RPC <code style="font-family:var(--mono);font-size:11px;">get_my_profile</code> (SECURITY DEFINER no Supabase). Retorna username, role.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">③</div>
+            <div class="note-text"><strong>Perfil não encontrado = force logout.</strong> Se o auth token existe mas o perfil não, o usuário é deslogado automaticamente.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">④</div>
+            <div class="note-text"><strong>Timeout de 15 segundos.</strong> Se o Supabase não responder, isLoading fica false e o usuário vai para a tela de login. Sem loading infinito.</div>
+          </div>
+          <div class="ann-note">
+            <div class="num-badge">⑤</div>
+            <div class="note-text"><strong>Login via username, não email.</strong> O Supabase Auth usa email internamente. O RPC traduz username → email antes do signInWithPassword.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5. Migration ───────────────────────────────────────────────── -->
+  <div class="module-card" id="migration-module">
+    <div class="module-header">
+      <div class="module-num" style="background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.25);">5</div>
+      <h3>Migration — localStorage → Supabase</h3>
+      <span class="filepath">src/lib/migration.ts</span>
+    </div>
+    <div class="module-body">
+      <p>Executado uma única vez por usuário, logo após o primeiro login. Sobe todos os dados locais para o Supabase se o banco ainda estiver vazio para aquele usuário.</p>
+
+      <div class="code-block">
+        <div class="code-block-header">
+          <span class="filename">src/lib/migration.ts — runMigration(userId)</span>
+        </div>
+        <pre><code><span class="kw">const</span> MIGRATION_FLAG = (userId: <span class="type">string</span>) =>
+  <span class="str">`anki_migrated_to_supabase_${userId}`</span>
+
+<span class="kw">export async function</span> <span class="fn">runMigration</span>(userId: <span class="type">string</span>): Promise&lt;<span class="type">void</span>&gt; {
+  <span class="cm">// 1. Guarda de idempotência — flag no localStorage</span>
+  <span class="kw">if</span> (localStorage.<span class="fn">getItem</span>(<span class="fn">MIGRATION_FLAG</span>(userId))) <span class="kw">return</span>
+
+  <span class="cm">// 2. Supabase já tem dados? Não sobrescreve</span>
+  <span class="kw">const</span> remoteDecks = <span class="kw">await</span> <span class="fn">fetchDecks</span>(userId)
+  <span class="kw">if</span> (Object.<span class="fn">keys</span>(remoteDecks).length > <span class="num">0</span>) {
+    localStorage.<span class="fn">setItem</span>(<span class="fn">MIGRATION_FLAG</span>(userId), <span class="str">'done'</span>)
+    <span class="kw">return</span>
+  }
+
+  <span class="cm">// 3. Lê dados do localStorage e sobe tudo em paralelo</span>
+  <span class="kw">const</span> uploads: Promise&lt;<span class="type">void</span>&gt;[] = [
+    <span class="fn">upsertAllDecks</span>(decks, userId),
+    <span class="fn">upsertAllCards</span>(cards, userId),
+    <span class="fn">upsertStudyGoal</span>(goal, userId),
+    <span class="fn">upsertDailyStats</span>(stats, userId),
+    <span class="fn">upsertPomodoroState</span>(pomodoro, userId),
+    <span class="cm">// ... schedule entries, completions, dinos</span>
+  ]
+  <span class="kw">await</span> Promise.<span class="fn">allSettled</span>(uploads)  <span class="cm">// falhas parciais não bloqueiam</span>
+  localStorage.<span class="fn">setItem</span>(<span class="fn">MIGRATION_FLAG</span>(userId), <span class="str">'done'</span>)
+}</code></pre>
+      </div>
+
+      <p>A migração usa <code style="font-family:var(--mono);font-size:12px;">Promise.allSettled</code> em vez de <code style="font-family:var(--mono);font-size:12px;">Promise.all</code> — falhas parciais (ex: erro numa entrada de schedule) não impedem a migração das demais entidades. A flag é gravada no final, então uma migração parcialmente falha pode ser reexecutada se o localStorage for limpo.</p>
+    </div>
+  </div>
+
+</section>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SECTION 4 — GOTCHAS
+════════════════════════════════════════════════════════════════════ -->
+<section id="gotchas">
+  <div class="section-tag">Gotchas</div>
+  <h1>Gotchas</h1>
+  <p class="lead">Armadilhas, comportamentos não óbvios e detalhes que a documentação esqueceu — e que vão te fazer perder uma tarde se você ignorar.</p>
+
+  <div class="gotcha-grid">
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">1</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">Card errado é reinserido 3 posições à frente, não no fim da fila</div>
+        <div class="gotcha-desc">
+          Em <code>studyStore.rateCard</code>, quando o rating é <code>'wrong'</code>, o card é inserido em
+          <code>queue[currentIndex + 3]</code>, não no <code>push()</code> do fim. Isso garante que o usuário
+          veja o card errado novamente logo em breve, mas não imediatamente. Se a fila tem 2 cards restantes,
+          o card errado vai para o fim mesmo assim (splice trunca). Se você quiser mudar esse comportamento,
+          cuidado: a lógica de <code>isDone = nextIndex >= newQueue.length</code> usa o tamanho <em>após</em> a reinserção.
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">2</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">Supabase sobrescreve localStorage silenciosamente no hydrate</div>
+        <div class="gotcha-desc">
+          Se o usuário editou cards offline e depois abre o app com conexão, o hydrate chama <code>fetchDecks(userId)</code>
+          e, se Supabase retornar dados, <strong>sobrescreve o localStorage e o estado React sem aviso</strong>.
+          Não há merge — é uma substituição total. Mudanças offline são perdidas se o Supabase não as recebeu antes.
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">3</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">saveAllCards serializa TODOS os cards a cada rating</div>
+        <div class="gotcha-desc">
+          <code>deckStore.applyRating</code> chama <code>saveAllCards(updatedCards)</code> — não <code>saveCard(card)</code>.
+          Isso re-serializa e regrava o objeto inteiro de cards no localStorage toda vez que um card é avaliado.
+          Com dezenas de cards é invisível. Com baralhos grandes (centenas de cards), pode causar jank perceptível,
+          especialmente em dispositivos lentos. O culpado é que <code>saveAllCards</code> também dispara
+          <code>db.upsertAllCards</code> no Supabase (em chunks de 500).
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">4</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">isLoading começa true — o App pode ficar preso se o listener não disparar</div>
+        <div class="gotcha-desc">
+          <code>authStore</code> inicia com <code>isLoading: true</code>. Ele só vira <code>false</code> quando
+          <code>onAuthStateChange</code> dispara (evento <code>INITIAL_SESSION</code> ou <code>SIGNED_OUT</code>).
+          Se o cliente Supabase falhar silenciosamente antes de disparar o evento, o app fica em loading infinito.
+          Há um timeout de 15s em <code>resolveSession</code>, mas o próprio evento <code>INITIAL_SESSION</code>
+          pode não disparar se a inicialização do cliente falhar. O <code>App.tsx</code> tem um safety net de
+          timeout adicional para esse caso.
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">5</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">Schedule completions NÃO sincronizam com Supabase</div>
+        <div class="gotcha-desc">
+          <code>saveScheduleCompletions</code> em <code>storage.ts</code> só grava no localStorage —
+          não chama nenhuma função do <code>db.ts</code>. As marcações de "aula concluída" no cronograma
+          são locais e se perdem se o usuário trocar de device ou limpar o browser.
+          As <em>entradas</em> do cronograma (<code>ScheduleEntry</code>) sincronizam normalmente via
+          <code>upsertScheduleEntry</code>, mas as <em>conclusões</em> (<code>ScheduleCompletion</code>)
+          não, apesar de existirem tabelas para isso no Supabase.
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">6</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">MASTERED exige DUAS condições simultâneas</div>
+        <div class="gotcha-desc">
+          Um card só vai para <code>'mastered'</code> se <code>repetitions >= 5</code> <strong>E</strong>
+          <code>intervalDays >= 21</code>. Só ter muitas repetições mas intervalo pequeno não basta.
+          Isso significa que um card avaliado como "difícil" muitas vezes pode acumular repetições
+          mas jamais atingir o status mastered porque o intervalo fica reduzido.
+          Cards mastered são excluídos da fila de estudo por <code>buildStudyQueue</code>.
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">7</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">Auth keys não têm namespace de usuário no localStorage</div>
+        <div class="gotcha-desc">
+          <code>anki_users</code> e <code>anki_auth_session</code> são globais (sem <code>_userId</code> sufixo).
+          Todas as outras chaves têm o sufixo. Isso significa que, em um browser compartilhado,
+          os dados de autenticação podem vazar entre contextos de usuário — a lista de usuários
+          visível para qualquer um que abrir o browser. A sessão de auth é gerenciada pelo Supabase
+          JS SDK (cookie/localStorage próprio), mas o <code>anki_auth_session</code> é um legado
+          que ainda persiste.
+        </div>
+      </div>
+    </div>
+
+    <div class="gotcha-card">
+      <div class="gotcha-num">8</div>
+      <div class="gotcha-body">
+        <div class="gotcha-title">sessionMinutes é limitado a 120 minutos</div>
+        <div class="gotcha-desc">
+          No fim de uma sessão de estudo, o tempo é calculado como
+          <code>Math.min(120, Math.round((Date.now() - startedAt) / 60_000))</code>.
+          Sessões com mais de 2 horas sempre contam como 2 horas nas estatísticas diárias
+          e no cálculo da meta de minutos. Isso previne que uma sessão esquecida aberta
+          durante horas inflacione as stats, mas pode frustrar usuários que realmente estudam mais.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+  // Active nav link based on scroll position
+  const sections = document.querySelectorAll('section[id]')
+  const navLinks = document.querySelectorAll('nav a[href^="#"]')
+
+  function updateActive() {
+    let current = ''
+    sections.forEach(s => {
+      const top = s.getBoundingClientRect().top
+      if (top <= 120) current = s.id
+    })
+    navLinks.forEach(a => {
+      const href = a.getAttribute('href').slice(1)
+      a.classList.toggle('active', href === current || (current === '' && href === 'overview'))
+    })
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true })
+  updateActive()
+</script>
+
+</body>
+</html>
