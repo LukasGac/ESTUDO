@@ -8,3 +8,8 @@ coverage/
 .DS_Store
 .claude/
 .superpowers/
+
+# Estado local da CLI do Supabase: guarda o project-ref, a organizacao e a
+# URL do pooler do banco. Nao e credencial, mas e o endereco exato da
+# infraestrutura — nao entra no repositorio.
+supabase/.temp/
